@@ -7,6 +7,8 @@ A production-grade credential harvesting honeypot that mimics an online banking 
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
+For the live testing project, please follow: https://45.32.223.5/
+
 ## 📊 Project Stats
 
 - **5+ attacks** captured in the first 72 hours.
