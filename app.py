@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, redirect, url_for, flash
 from datetime import datetime
 import os, time, random
 
+#Setting Application
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'change-this-in-production')
 
