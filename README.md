@@ -151,7 +151,3 @@ Within hours of exposing the server (no links shared, no advertising):
 This project is for **educational and research purposes only**. Deploy only on infrastructure you own or have explicit permission to operate. Attack logs are excluded from this repository — never publish real attacker data (IPs, credentials) publicly.
 
 ---
-
-## License
-
-MIT
