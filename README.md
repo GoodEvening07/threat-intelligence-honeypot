@@ -2,7 +2,7 @@
 
 A realistic fake bank login portal that captures and analyzes real-world credential stuffing, brute-force, and automated scanning activity in real time.
 
-Built as a hands-on cybersecurity learning project to study attacker behavior, bot traffic patterns, and threat intelligence collection — no advertising required. Just expose an IP and watch what shows up.
+Built as a hands-on cybersecurity learning project to study attacker behavior, bot traffic patterns, and threat intelligence collection no advertising required. Just expose an IP and watch what shows up.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-2.3+-lightgrey) ![License](https://img.shields.io/badge/License-MIT-green)
 
