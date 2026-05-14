@@ -1,8 +1,8 @@
-# Credit Bank Union — Threat Intelligence Honeypot
+# Credit Bank Union Threat Intelligence Honeypot
 
 A realistic fake bank login portal that captures and analyzes real-world credential stuffing, brute-force, and automated scanning activity in real time.
 
-Built as a hands-on cybersecurity learning project to study attacker behavior, bot traffic patterns, and threat intelligence collection no advertising required. Just expose an IP and watch what shows up.
+Built as a hands-on cybersecurity learning project to study attacker behavior, bot traffic patterns, and threat intelligence collection, no advertising required. Just expose an IP and watch what shows up.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-2.3+-lightgrey) ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -10,18 +10,18 @@ Built as a hands-on cybersecurity learning project to study attacker behavior, b
 
 ## Features
 
-- **Realistic decoy** — Convincing bank login page styled as "Credit Bank Union" to attract automated scanners and manual attackers
-- **Real-time logging** — Every login attempt logged with IP, credentials tried, user agent, geolocation, and bot flag
+- **Realistic decoy** Convincing bank login page styled as "Credit Bank Union" to attract automated scanners and manual attackers
+- **Real-time logging** Every login attempt logged with IP, credentials tried, user agent, geolocation, and bot flag
 - **Admin dashboard** (password-protected) with:
   - Attack counters: total attempts, unique IPs, bot vs. human split
   - 7-day attack timeline chart
   - Interactive world map with per-location attack markers
-  - IP enrichment on click — ISP, org, AS number, proxy/VPN/datacenter/mobile flags via ip-api.com (fetched browser-side, zero extra server load)
+  - IP enrichment on click ISP, org, AS number, proxy/VPN/datacenter/mobile flags via ip-api.com (fetched browser-side, zero extra server load)
   - Full searchable log table with live filtering across all fields
-- **Bot detection** — Flags automated tools by User-Agent signature (curl, wget, python-requests, scanners, etc.)
-- **Geolocation** — Maps attack origins using MaxMind GeoLite2-City
-- **Splunk integration** — Optional HEC forwarding for SIEM ingestion
-- **Mobile responsive** — Dashboard and login page work on all screen sizes
+- **Bot detection** Flags automated tools by User-Agent signature (curl, wget, python-requests, scanners, etc.)
+- **Geolocation** Maps attack origins using MaxMind GeoLite2-City
+- **Splunk integration** Optional HEC forwarding for SIEM ingestion
+- **Mobile responsive** Dashboard and login page work on all screen sizes
 
 ---
 
@@ -55,13 +55,13 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Get the GeoLite2 database (optional — enables the map)
+### 3. Get the GeoLite2 database (optional)
 
 1. Create a free MaxMind account at [maxmind.com](https://www.maxmind.com/en/geolite2/signup)
 2. Download `GeoLite2-City.mmdb`
 3. Place it at `geoip/GeoLite2-City.mmdb`
 
-Without this file the app still runs — the map just shows a placeholder.
+Without this file the app still runs the map just shows a placeholder.
 
 ### 4. Set environment variables
 
