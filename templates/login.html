@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign On - Credit Bank Union®</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Utility Bar -->
+    <div class="top-bar">
+        <div class="top-bar-inner">
+            <span class="top-bar-phone">&#9990; 1-800-CBU-BANK &nbsp;|&nbsp; Available 24 hours a day, 7 days a week</span>
+            <div class="top-bar-links">
+                <a href="#">Personal</a>
+                <a href="#">Business</a>
+                <a href="#">En Español</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="#" class="logo">
+                <svg class="logo-icon" viewBox="0 0 40 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 2L3 9V21c0 11 7.5 20.5 17 23 9.5-2.5 17-12 17-23V9L20 2Z" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.85)" stroke-width="1.5"/>
+                    <path d="M13 22l4.5 4.5L27 17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="logo-text">
+                    <span class="logo-name">Credit Bank Union</span>
+                    <span class="logo-tagline">Member FDIC</span>
+                </div>
+            </a>
+            <nav class="header-nav">
+                <a href="#" class="header-link">ATMs &amp; Branches</a>
+                <a href="#" class="header-link">Help &amp; Support</a>
+                <a href="#" class="btn-open-account">Open an Account</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="sec-nav">
+        <div class="sec-nav-inner">
+            <a href="#">Checking &amp; Savings</a>
+            <a href="#">Credit Cards</a>
+            <a href="#">Home Loans</a>
+            <a href="#">Auto Loans</a>
+            <a href="#">Investing &amp; Wealth</a>
+            <a href="#">Business Banking</a>
+        </div>
+    </nav>
+
+    <!-- Page Body -->
+    <div class="page-body">
+        <div class="login-wrap">
+
+            <!-- Left Branding Panel -->
+            <div class="login-aside">
+                <div class="aside-shield">
+                    <svg viewBox="0 0 48 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 2L2 11V26c0 14 9.5 26.5 22 30 12.5-3.5 22-16 22-30V11L24 2Z" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                        <path d="M15 27l6 6L33 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h2 class="aside-title">Secure Online Banking</h2>
+                <p class="aside-desc">Your trusted financial partner accessible anytime, anywhere, on any device.</p>
+                <ul class="aside-features">
+                    <li>View balances &amp; transaction history</li>
+                    <li>Instant fund transfers</li>
+                    <li>Bill pay &amp; card management</li>
+                    <li>Mobile check deposit</li>
+                    <li>24/7 fraud monitoring</li>
+                </ul>
+                <div class="aside-badges">
+                    <div class="fdic-badge">
+                        <span class="fdic-label">FDIC</span>
+                        <span class="fdic-sub">Insured</span>
+                    </div>
+                    <div class="ehl-badge">&#8962; Equal Housing Lender</div>
+                </div>
+            </div>
+
+            <!-- Right Form Panel -->
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>Sign On</h1>
+                    <p>to Credit Bank Union<sup>®</sup></p>
+                </div>
+
+                <!-- Error Message -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="error-message">
+                                <span class="error-icon">&#9888;</span>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Login Form -->
+                <form method="POST" action="/login" id="loginForm" novalidate>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required
+                               autocomplete="username" placeholder="Enter your username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="password" name="password" required
+                                   autocomplete="current-password" placeholder="Enter your password">
+                            <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password visibility">
+                                <svg id="eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg id="eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="remember-label">
+                            <input type="checkbox" name="remember" id="remember">
+                            <span class="checkmark"></span>
+                            <span>Remember Username</span>
+                        </label>
+                        <a href="#" class="forgot-link">Forgot Username/Password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-signin" id="submitBtn">Sign On</button>
+
+                    <div class="divider"><span>New to online banking?</span></div>
+
+                    <div class="enroll-links">
+                        <a href="#" class="btn-secondary">Enroll Now</a>
+                        <a href="#" class="btn-secondary">Activate Your Card</a>
+                    </div>
+                </form>
+
+                <!-- Security Info -->
+                <div class="security-info">
+                    <svg class="lock-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>256-bit SSL encrypted &nbsp;·&nbsp; Secure session active</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-links">
+                <a href="#">Privacy &amp; Security</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Report Email Fraud</a>
+                <a href="#">Security Center</a>
+                <a href="#">Accessibility</a>
+                <a href="#">Sitemap</a>
+            </div>
+            <div class="footer-badges">
+                <span class="badge-fdic">FDIC Insured</span>
+                <span class="badge-ehl">&#8962; Equal Housing Lender</span>
+            </div>
+            <p class="copyright">© 1999–2026 Credit Bank Union, N.A. All rights reserved. NMLSR ID 399801</p>
+            <p class="legal-text">Credit Bank Union, N.A. Member FDIC. Equal Housing Lender. Investment and insurance products are not FDIC insured, are not bank guaranteed, and may lose value. All credit products are subject to credit approval.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function () {
+            var btn = document.getElementById('submitBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+        });
+
+        document.getElementById('togglePw').addEventListener('click', function () {
+            var input = document.getElementById('password');
+            var showIcon = document.getElementById('eye-show');
+            var hideIcon = document.getElementById('eye-hide');
+            if (input.type === 'password') {
+                input.type = 'text';
+                showIcon.style.display = 'none';
+                hideIcon.style.display = 'block';
+            } else {
+                input.type = 'password';
+                showIcon.style.display = 'block';
+                hideIcon.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

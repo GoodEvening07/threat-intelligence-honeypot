@@ -1,0 +1,27 @@
+# Virtual environment
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs — contain real attacker IPs and credentials, never commit
+logs/*.log
+logs/*.txt
+
+# GeoIP database — ~60MB binary, download from MaxMind separately
+geoip/*.mmdb
+
+# Environment / secrets
+.env
+.env.*
+
+# IDE temp files
+tempCodeRunnerFile.py
+.vscode/
+*.swp
+
+# CSV exports from analyze_logs.py
+*.csv

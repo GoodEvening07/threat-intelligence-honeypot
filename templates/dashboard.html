@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honeypot Stats Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Verdana, Arial, sans-serif; background: #00021e; color: #ffffff; min-height: 100vh; }
+
+        /* Header */
+        .header {
+            background: #020527;
+            padding: 14px 28px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            border-bottom: 1px solid #1a1f4e;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+        }
+        .header h1 { color: #ffffff; font-size: 18px; font-weight: bold; letter-spacing: 0.3px; }
+        .header-subtitle { color: #6b7db3; font-size: 11px; margin-top: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+        .header-center { text-align: center; }
+        .header-date { color: #ffffff; font-size: 12px; margin-bottom: 4px; letter-spacing: 0.3px; }
+        .header-time { color: #ff6b8a; font-size: 26px; font-weight: bold; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+
+        .header-right { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
+        .refresh-info { color: #ffffff; font-size: 12px; }
+        .badge-live {
+            background: #3a0018; color: #ff6b8a;
+            padding: 4px 12px; border-radius: 12px; font-size: 11px;
+            font-weight: bold; letter-spacing: 1px;
+            border: 1px solid #7a0030;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .btn-export {
+            background: rgba(255,107,138,0.12); color: #ff6b8a;
+            border: 1px solid #7a0030; border-radius: 5px;
+            padding: 6px 14px; font-size: 12px; font-weight: bold;
+            cursor: pointer; letter-spacing: 0.3px;
+            transition: background 0.2s;
+        }
+        .btn-export:hover { background: rgba(255,107,138,0.22); }
+
+        /* Main */
+        .main { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+
+        /* Stat cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #020527;
+            border: 1px solid #1a1f4e;
+            border-top: 3px solid #ff6b8a;
+            border-radius: 8px;
+            padding: 22px 20px;
+            text-align: center;
+        }
+        .stat-card .value { font-size: 40px; font-weight: bold; color: #ff6b8a; margin-bottom: 8px; }
+        .stat-card .label { font-size: 12px; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Charts */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: #020527;
+            border: 1px solid #1a1f4e;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .chart-card h2, .table-card h2 {
+            font-size: 13px; color: #ffffff; margin-bottom: 16px;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            padding-bottom: 10px; border-bottom: 1px solid #1a1f4e;
+        }
+        canvas { max-height: 260px; }
+
+        /* Map */
+        .map-card {
+            background: #020527;
+            border: 1px solid #1a1f4e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .map-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1a1f4e;
+        }
+        .map-card-header h2 {
+            font-size: 13px; color: #ffffff;
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .btn-fullscreen {
+            background: rgba(255,107,138,0.12); color: #ff6b8a;
+            border: 1px solid #7a0030; border-radius: 5px;
+            padding: 5px 12px; font-size: 11px; font-weight: bold;
+            cursor: pointer; letter-spacing: 0.3px; white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .btn-fullscreen:hover { background: rgba(255,107,138,0.22); }
+
+        #attackMap {
+            height: 380px;
+            border-radius: 6px;
+            border: 1px solid #1a1f4e;
+        }
+        #attackMap:fullscreen          { height: 100vh; width: 100vw; border-radius: 0; }
+        #attackMap:-webkit-full-screen { height: 100vh; width: 100vw; border-radius: 0; }
+
+        .map-no-data {
+            height: 300px; display: flex; align-items: center; justify-content: center;
+            color: #3a4070; font-size: 13px; border: 1px dashed #1a1f4e; border-radius: 6px;
+            text-align: center; padding: 20px;
+        }
+        .leaflet-popup-content-wrapper { background: #020527; color: #fff; border: 1px solid #1a1f4e; }
+        .leaflet-popup-tip { background: #020527; }
+        .leaflet-popup-content { font-size: 13px; line-height: 1.6; min-width: 200px; }
+
+        /* Tables */
+        .tables-row {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .table-card {
+            background: #020527;
+            border: 1px solid #1a1f4e;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th {
+            background: #010316; color: #ffffff;
+            text-align: left; padding: 10px 12px;
+            border-bottom: 1px solid #1a1f4e;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+            white-space: nowrap;
+        }
+        td { padding: 10px 12px; border-bottom: 1px solid #0a0d2e; color: #ffffff; white-space: nowrap; }
+        tbody tr:hover td { background: #030630; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .badge-bot   { background: #4a0020; color: #ff6b8a; border: 1px solid #7a0030; }
+        .badge-human { background: #003d1a; color: #6bff9a; border: 1px solid #006b30; }
+        .empty-row td { text-align: center; color: #3a4070; padding: 20px; white-space: normal; }
+
+        /* All Logs section */
+        .logs-card {
+            background: #020527;
+            border: 1px solid #1a1f4e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .logs-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1a1f4e;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .logs-card-header h2 {
+            font-size: 13px; color: #ffffff;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            white-space: nowrap;
+        }
+        .logs-count { color: #6b7db3; font-size: 11px; margin-left: 8px; }
+        .logs-search {
+            background: #010316;
+            border: 1px solid #1a1f4e;
+            border-radius: 5px;
+            color: #ffffff;
+            padding: 7px 12px;
+            font-size: 13px;
+            min-width: 220px;
+            flex: 1;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .logs-search:focus { border-color: #ff6b8a; }
+        .logs-search::placeholder { color: #3a4070; }
+        .logs-table-wrap {
+            max-height: 440px;
+            overflow-y: auto;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .logs-table-wrap td.ua-cell {
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Footer */
+        .footer { text-align: center; padding: 16px; color: #3a4070; font-size: 11px; border-top: 1px solid #0a0d2e; }
+
+        /* ── Mobile ── */
+        @media (max-width: 960px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-row, .tables-row { grid-template-columns: 1fr; }
+            .header { grid-template-columns: 1fr; gap: 8px; text-align: center; padding: 12px 16px; }
+            .header-right { justify-content: center; flex-wrap: wrap; gap: 8px; }
+            #attackMap { height: 280px; }
+        }
+        @media (max-width: 600px) {
+            .main { padding: 14px 10px; }
+            .header h1 { font-size: 15px; }
+            .header-subtitle { display: none; }
+            .header-time { font-size: 20px; }
+            .header-date { font-size: 11px; }
+            .refresh-info { display: none; }
+            .stat-card { padding: 16px 10px; }
+            .stat-card .value { font-size: 28px; }
+            .stat-card .label { font-size: 10px; letter-spacing: 0.5px; }
+            .chart-card, .map-card, .table-card, .logs-card { padding: 14px 10px; }
+            #attackMap { height: 220px; }
+            .map-no-data { height: 160px; font-size: 12px; }
+            .logs-search { min-width: 0; width: 100%; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>Honeypot Stats Dashboard</h1>
+        <div class="header-subtitle">Credit Bank Union &mdash; Personal Project</div>
+    </div>
+    <div class="header-center">
+        <div id="live-date" class="header-date"></div>
+        <div id="live-time" class="header-time"></div>
+    </div>
+    <div class="header-right">
+        <button class="btn-export" onclick="exportCSV()">&#8659; Export CSV</button>
+        <span class="badge-live">&#9679; LIVE</span>
+        <span class="refresh-info">Refresh in <span id="countdown">60</span>s</span>
+    </div>
+</div>
+
+<div class="main">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="value">{{ total }}</div>
+            <div class="label">Total Attacks</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ unique_ips }}</div>
+            <div class="label">Unique IPs</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ bot_pct }}%</div>
+            <div class="label">Bot Traffic</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ human_pct }}%</div>
+            <div class="label">Human Traffic</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <h2>Bot vs Human</h2>
+            <canvas id="donutChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Attacks &mdash; Last 7 Days</h2>
+            <canvas id="timelineChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Attack Origins Map -->
+    <div class="map-card">
+        <div class="map-card-header">
+            <h2>Attack Origins &mdash; World Map</h2>
+            {% if map_data %}
+            <button class="btn-fullscreen" id="btnFullscreen" onclick="toggleFullscreen()">&#x26F6; Fullscreen</button>
+            {% endif %}
+        </div>
+        {% if map_data %}
+            <div id="attackMap"></div>
+        {% else %}
+            <div class="map-no-data">
+                No geolocation data &mdash; add GeoLite2-City.mmdb to /geoip/ to enable this map
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Tables -->
+    <div class="tables-row">
+        <div class="table-card">
+            <h2>Top 5 Attacking IPs</h2>
+            <table>
+                <thead><tr><th>IP Address</th><th>Attempts</th></tr></thead>
+                <tbody>
+                    {% for ip, count in top_ips %}
+                    <tr><td>{{ ip }}</td><td>{{ count }}</td></tr>
+                    {% else %}
+                    <tr class="empty-row"><td colspan="2">No data yet</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h2>Recent 10 Attacks</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th><th>IP</th><th>Username</th>
+                        <th>Country</th><th>City</th><th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in recent %}
+                    <tr>
+                        <td>{{ e.timestamp }}</td>
+                        <td>{{ e.ip }}</td>
+                        <td>{{ e.username if e.username and e.username != 'None' else '&mdash;' }}</td>
+                        <td>{{ e.country }}</td>
+                        <td>{{ e.city }}</td>
+                        <td>
+                            {% if e.is_bot %}
+                                <span class="badge badge-bot">BOT</span>
+                            {% else %}
+                                <span class="badge badge-human">HUMAN</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr class="empty-row"><td colspan="6">No attacks logged yet</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- All Attack Logs -->
+    <div class="logs-card">
+        <div class="logs-card-header">
+            <h2>All Attack Logs <span class="logs-count" id="logsCount"></span></h2>
+            <input type="search" class="logs-search" id="logsSearch"
+                   placeholder="Filter by IP, username, country, user agent...">
+        </div>
+        <div class="logs-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th><th>IP</th><th>Username</th>
+                        <th>Country</th><th>City</th><th>User Agent</th><th>Type</th>
+                    </tr>
+                </thead>
+                <tbody id="logsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">Credit Bank Union Honeypot Project</div>
+
+<!-- Data island -->
+<script type="application/json" id="hp-data">
+{
+    "botCount":       {{ bot_count }},
+    "humanCount":     {{ human_count }},
+    "timelineLabels": {{ timeline_labels | tojson }},
+    "timelineData":   {{ timeline_data   | tojson }},
+    "mapPoints":      {{ map_data | tojson if map_data else '[]' }},
+    "allEntries":     {{ entries | tojson }}
+}
+</script>
+
+<script>
+    var D = JSON.parse(document.getElementById('hp-data').textContent);
+    var attackMap = null;
+    var ipCache   = {};
+
+    // ── Live clock ──
+    function updateClock() {
+        var now = new Date();
+        document.getElementById('live-date').textContent = now.toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        document.getElementById('live-time').textContent = now.toLocaleTimeString('en-US', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ── Donut chart ──
+    new Chart(document.getElementById('donutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Bots', 'Humans'],
+            datasets: [{
+                data: [D.botCount, D.humanCount],
+                backgroundColor: ['rgba(139,0,48,0.85)', 'rgba(0,107,48,0.85)'],
+                borderColor: ['#ff6b8a', '#6bff9a'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#ffffff', font: { size: 13, family: 'Verdana' } } } }
+        }
+    });
+
+    // ── Timeline chart ──
+    new Chart(document.getElementById('timelineChart'), {
+        type: 'bar',
+        data: {
+            labels: D.timelineLabels,
+            datasets: [{
+                label: 'Attacks',
+                data: D.timelineData,
+                backgroundColor: 'rgba(139,0,48,0.75)',
+                borderColor: '#ff6b8a',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { ticks: { color: '#ffffff' }, grid: { color: '#0a0d2e' } },
+                y: { ticks: { color: '#ffffff', stepSize: 1, precision: 0 }, grid: { color: '#0a0d2e' }, beginAtZero: true }
+            },
+            plugins: { legend: { labels: { color: '#ffffff' } } }
+        }
+    });
+
+    // ── Attack Map ──
+    if (D.mapPoints.length > 0) {
+        attackMap = L.map('attackMap', { zoomControl: true }).setView([20, 10], 2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            subdomains: 'abcd', maxZoom: 19
+        }).addTo(attackMap);
+
+        D.mapPoints.forEach(function(p) {
+            var isMostlyBot = p.bots >= p.count / 2;
+            var radius = Math.max(6, Math.min(22, 6 + p.count * 1.5));
+
+            // Find unique IPs at this location from the full log
+            var seen = {}, locationIPs = [];
+            D.allEntries.forEach(function(e) {
+                if (e.country === p.country && e.city === p.city && !seen[e.ip]) {
+                    seen[e.ip] = true;
+                    locationIPs.push(e.ip);
+                }
+            });
+
+            // Build popup HTML
+            var ipRows = locationIPs.map(function(ip) {
+                var elId = 'ipd-' + ip.replace(/[^a-zA-Z0-9]/g, '-');
+                return '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #1a1f4e">' +
+                    '<span style="font-family:monospace;font-size:12px">' + ip + '</span>' +
+                    '<button class="ip-lookup-btn" data-ip="' + ip + '" data-target="' + elId + '" ' +
+                    'style="margin-left:8px;background:rgba(255,107,138,0.18);color:#ff6b8a;' +
+                    'border:1px solid #7a0030;border-radius:3px;padding:1px 8px;font-size:10px;cursor:pointer">' +
+                    'Look up</button>' +
+                    '<div id="' + elId + '" style="margin-top:4px;font-size:10px;color:#8a9fd0;line-height:1.6"></div>' +
+                    '</div>';
+            }).join('');
+
+            var popupHTML =
+                '<strong>' + p.city + ', ' + p.country + '</strong><br>' +
+                'Attempts: <strong>' + p.count + '</strong><br>' +
+                '<span style="color:#ff6b8a">Bots: ' + p.bots + '</span>' +
+                '&nbsp;&nbsp;<span style="color:#6bff9a">Humans: ' + (p.count - p.bots) + '</span>' +
+                (ipRows ? '<div style="margin-top:4px;font-size:11px;color:#6b7db3">IPs at this location:</div>' + ipRows : '');
+
+            L.circleMarker([p.lat, p.lon], {
+                radius: radius,
+                fillColor: isMostlyBot ? '#ff6b8a' : '#6bff9a',
+                color:     isMostlyBot ? '#ff2255' : '#00cc55',
+                weight: 1.5, opacity: 1, fillOpacity: 0.65
+            }).bindPopup(popupHTML, { maxWidth: 300 }).addTo(attackMap);
+        });
+    }
+
+    // IP lookup — fires from browser to ip-api.com, no VPS traffic
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest ? e.target.closest('.ip-lookup-btn') : null;
+        if (!btn) return;
+        e.preventDefault();
+
+        var ip  = btn.getAttribute('data-ip');
+        var el  = document.getElementById(btn.getAttribute('data-target'));
+        if (!el) return;
+
+        btn.disabled = true;
+        btn.textContent = '...';
+
+        if (ipCache[ip]) { showIPDetail(el, ipCache[ip]); return; }
+
+        fetch('http://ip-api.com/json/' + ip + '?fields=status,isp,org,as,mobile,proxy,hosting')
+            .then(function(r) { return r.json(); })
+            .then(function(data) { ipCache[ip] = data; showIPDetail(el, data); })
+            .catch(function() { el.textContent = 'Lookup unavailable'; });
+    });
+
+    function showIPDetail(el, data) {
+        if (!data || data.status !== 'success') {
+            el.textContent = 'No public data found';
+            return;
+        }
+        var lines = [];
+        if (data.isp) lines.push('<span style="color:#aaa">ISP:</span> ' + data.isp);
+        if (data.org) lines.push('<span style="color:#aaa">Org:</span> ' + data.org);
+        if (data.as)  lines.push('<span style="color:#aaa">AS:</span> '  + data.as);
+        var flags = [];
+        if (data.proxy)   flags.push('<span style="color:#ff6b8a">Proxy/VPN</span>');
+        if (data.hosting) flags.push('<span style="color:#ffaa44">Datacenter</span>');
+        if (data.mobile)  flags.push('<span style="color:#6bff9a">Mobile</span>');
+        if (flags.length) lines.push(flags.join(' &middot; '));
+        el.innerHTML = lines.join('<br>') || 'No details available';
+    }
+
+    // ── Fullscreen map ──
+    function toggleFullscreen() {
+        var mapEl = document.getElementById('attackMap');
+        var btn   = document.getElementById('btnFullscreen');
+        if (!document.fullscreenElement) {
+            var req = mapEl.requestFullscreen || mapEl.webkitRequestFullscreen;
+            req.call(mapEl).then(function() {
+                btn.textContent = '✕ Exit Fullscreen';
+                setTimeout(function() { if (attackMap) attackMap.invalidateSize(); }, 200);
+            }).catch(function() {});
+        } else {
+            document.exitFullscreen().then(function() {
+                btn.textContent = '⛶ Fullscreen';
+                setTimeout(function() { if (attackMap) attackMap.invalidateSize(); }, 200);
+            });
+        }
+    }
+    document.addEventListener('fullscreenchange', function() {
+        if (!document.fullscreenElement) {
+            var btn = document.getElementById('btnFullscreen');
+            if (btn) btn.textContent = '⛶ Fullscreen';
+            setTimeout(function() { if (attackMap) attackMap.invalidateSize(); }, 200);
+        }
+    });
+
+    // ── All Logs table ──
+    var allLogs = D.allEntries.slice().reverse(); // newest first
+
+    function esc(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function renderLogs(entries) {
+        document.getElementById('logsCount').textContent = '(' + entries.length + ' entries)';
+        var html = entries.map(function(e) {
+            var uname = (e.username && e.username !== 'None') ? esc(e.username) : '&mdash;';
+            var badge = e.is_bot
+                ? '<span class="badge badge-bot">BOT</span>'
+                : '<span class="badge badge-human">HUMAN</span>';
+            return '<tr>' +
+                '<td>' + esc(e.timestamp) + '</td>' +
+                '<td>' + esc(e.ip) + '</td>' +
+                '<td>' + uname + '</td>' +
+                '<td>' + esc(e.country) + '</td>' +
+                '<td>' + esc(e.city) + '</td>' +
+                '<td class="ua-cell" title="' + esc(e.ua) + '">' + esc(e.ua) + '</td>' +
+                '<td>' + badge + '</td>' +
+                '</tr>';
+        }).join('') || '<tr class="empty-row"><td colspan="7">No entries match</td></tr>';
+        document.getElementById('logsBody').innerHTML = html;
+    }
+
+    renderLogs(allLogs);
+
+    document.getElementById('logsSearch').addEventListener('input', function() {
+        var q = this.value.toLowerCase().trim();
+        if (!q) { renderLogs(allLogs); return; }
+        renderLogs(allLogs.filter(function(e) {
+            return e.ip.toLowerCase().includes(q) ||
+                   (e.username && e.username.toLowerCase().includes(q)) ||
+                   e.country.toLowerCase().includes(q) ||
+                   e.city.toLowerCase().includes(q) ||
+                   e.ua.toLowerCase().includes(q);
+        }));
+    });
+
+    // ── CSV export ──
+    function exportCSV() {
+        var headers = ['Timestamp', 'IP', 'Username', 'Country', 'City', 'User Agent', 'Type'];
+        var rows = D.allEntries.map(function(e) {
+            return [
+                e.timestamp, e.ip,
+                (e.username && e.username !== 'None') ? e.username : '',
+                e.country, e.city, e.ua,
+                e.is_bot ? 'BOT' : 'HUMAN'
+            ];
+        });
+        var csv = [headers].concat(rows).map(function(r) {
+            return r.map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url  = URL.createObjectURL(blob);
+        var a    = document.createElement('a');
+        a.href = url;
+        a.download = 'honeypot_logs_' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // ── Countdown ──
+    var secs = 60;
+    var cdEl = document.getElementById('countdown');
+    setInterval(function() {
+        secs--;
+        cdEl.textContent = secs;
+        if (secs <= 0) { location.reload(); }
+    }, 1000);
+</script>
+
+</body>
+</html>
