@@ -18,7 +18,7 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")
 
-ADMIN_PREFIX = "m9x4k2b7"
+ADMIN_PREFIX = os.environ.get("ADMIN_PREFIX", "changeme")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_PATH = os.path.join(BASE_DIR, "logs", "attacks.log")
 GEOIP_DB = os.path.join(BASE_DIR, "geoip", "GeoLite2-City.mmdb")
